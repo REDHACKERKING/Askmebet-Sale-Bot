@@ -24,7 +24,7 @@ async def health(request):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     checking = await message.reply_text("🔍 <b>กำลังตรวจสอบข้อมูล...</b>\n⏳ กรุณารอสักครู่", parse_mode="HTML")
-    await asyncio.sleep(2)
+    await asyncio.sleep(4)
     await checking.delete()
 
     success = await message.reply_text(
@@ -32,7 +32,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         '<a href="https://t.me/closed7777">@closed7777</a>',
         parse_mode="HTML", disable_web_page_preview=True,
     )
-    await asyncio.sleep(2)
+    await asyncio.sleep(6)
     await success.delete()
 
     sale_text = """👤 <b>Sale On-call ประจำสัปดาห์นี้</b>
