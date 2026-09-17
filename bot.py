@@ -1,19 +1,24 @@
 import asyncio
 import os
 
+from aiohttp import web
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application, CallbackQueryHandler, CommandHandler, ContextTypes,
     ConversationHandler, MessageHandler, filters,
 )
 
-TOKEN = os.getenv("8996570308:AAFJe3xOCdPmzdle0Rb2zVfRJht-2Iw4ftA")
+TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
     raise RuntimeError("BOT_TOKEN is not set")
 
 DOMAIN, CODE = range(2)
 VALID_DOMAIN = "sksj.com"
 VALID_CODE = "12037"
+
+
+async def health(request):
+    return web.Response(text="Askmebet Sale Bot is running!")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -124,19 +129,45 @@ async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.message.reply_text("🚪 ออกจากระบบซัพพอร์ตเรียบร้อยแล้วครับ")
 
 
-app = Application.builder().token(TOKEN).build()
-login_handler = ConversationHandler(
-    entry_points=[CallbackQueryHandler(support_login, pattern="^support_login$")],
-    states={
-        DOMAIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_domain)],
-        CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_code)],
-    },
-    fallbacks=[CommandHandler("cancel", cancel)],
-)
+async def main():
+    app = Application.builder().token(TOKEN).build()
+    login_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(support_login, pattern="^support_login$")],
+        states={
+            DOMAIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_domain)],
+            CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_code)],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+    )
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(login_handler)
-app.add_handler(CallbackQueryHandler(logout, pattern="^support_logout$"))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(login_handler)
+    app.add_handler(CallbackQueryHandler(logout, pattern="^support_logout$"))
 
-print("🤖 Askmebet Sale Bot is running...")
-app.run_polling()
+    # Render requires a web service to listen on 0.0.0.0:$PORT.
+    web_app = web.Application()
+    web_app.router.add_get("/", health)
+    web_app.router.add_get("/health", health)
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", "10000")))
+    await site.start()
+
+    print("🤖 Askmebet Sale Bot is running...")
+    print("🌐 Render health server is running...")
+
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+
+    try:
+        await asyncio.Event().wait()
+    finally:
+        await app.updater.stop()
+        await app.stop()
+        await app.shutdown()
+        await runner.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
