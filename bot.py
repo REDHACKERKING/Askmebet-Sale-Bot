@@ -7,7 +7,7 @@ from telegram.ext import (
     ConversationHandler, MessageHandler, filters,
 )
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.getenv("8996570308:AAFJe3xOCdPmzdle0Rb2zVfRJht-2Iw4ftA")
 if not TOKEN:
     raise RuntimeError("BOT_TOKEN is not set")
 
