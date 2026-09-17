@@ -108,7 +108,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [
             InlineKeyboardButton(
                 "🛡️ ช่องทางหลัก / Official",
-                url="https://t.me/Askmebetsaleofficial"
+                url="https://t.me/AMBServiceOfficial"
             )
         ],
         [
