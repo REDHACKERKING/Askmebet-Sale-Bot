@@ -2,34 +2,31 @@ import asyncio
 import os
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import (
+    Application, CallbackQueryHandler, CommandHandler, ContextTypes,
+    ConversationHandler, MessageHandler, filters,
+)
 
 TOKEN = os.getenv("BOT_TOKEN")
-
 if not TOKEN:
     raise RuntimeError("BOT_TOKEN is not set")
+
+DOMAIN, CODE = range(2)
+VALID_DOMAIN = "sksj.com"
+VALID_CODE = "12037"
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
-
-    checking = await message.reply_text(
-        "🔍 <b>กำลังตรวจสอบข้อมูล...</b>\n"
-        "⏳ กรุณารอสักครู่",
-        parse_mode="HTML",
-    )
-
+    checking = await message.reply_text("🔍 <b>กำลังตรวจสอบข้อมูล...</b>\n⏳ กรุณารอสักครู่", parse_mode="HTML")
     await asyncio.sleep(2)
     await checking.delete()
 
     success = await message.reply_text(
-        "✅ <b>ตรวจสอบสำเร็จ!</b>\n\n"
-        "คุณกำลังถูกดูแลโดย เอเจนซี่ "
+        "✅ <b>ตรวจสอบสำเร็จ!</b>\n\nคุณกำลังถูกดูแลโดย เอเจนซี่ "
         '<a href="https://t.me/closed7777">@closed7777</a>',
-        parse_mode="HTML",
-        disable_web_page_preview=True,
+        parse_mode="HTML", disable_web_page_preview=True,
     )
-
     await asyncio.sleep(2)
     await success.delete()
 
@@ -63,30 +60,83 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("💬 ติดต่อ Sale On-call", url="https://t.me/closed7777")],
         [InlineKeyboardButton("🛡️ ช่องทางหลัก / Official", url="https://t.me/Askmebetsaleofficial")],
+        [InlineKeyboardButton("🔐 เข้าสู่หน้าซัพพอร์ต", callback_data="support_login")],
     ]
-
-    await message.reply_text(
-        sale_text,
-        parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        disable_web_page_preview=True,
-    )
-
-    photo_url = "https://s.imgz.io/2026/09/17/1000354828d4067fc0751190c4.jpg"
-    welcome_text = (
-        "สวัสดีครับ ยินดีต้อนรับสู่ <b>Askmebet Sale Official</b> ครับ 👋\n\n"
-        "ต้องการประสานงานด้านใดครับ"
-    )
+    await message.reply_text(sale_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard), disable_web_page_preview=True)
 
     await message.reply_photo(
-        photo=photo_url,
-        caption=welcome_text,
+        photo="https://s.imgz.io/2026/09/17/1000354828d4067fc0751190c4.jpg",
+        caption="สวัสดีครับ ยินดีต้อนรับสู่ <b>Askmebet Sale Official</b> ครับ 👋\n\nต้องการประสานงานด้านใดครับ",
         parse_mode="HTML",
     )
+
+
+async def support_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await query.message.reply_text(
+        "🔐 <b>เข้าสู่หน้าซัพพอร์ต</b>\n\n🌐 กรุณากรอก Domain Name\nตัวอย่าง: <code>sksj.com</code>",
+        parse_mode="HTML",
+    )
+    return DOMAIN
+
+
+async def receive_domain(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["support_domain"] = update.message.text.strip().lower()
+    await update.message.reply_text("🔑 <b>กรุณากรอกรหัสที่ได้รับจากเอเจนซี่</b>", parse_mode="HTML")
+    return CODE
+
+
+async def receive_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    domain = context.user_data.get("support_domain", "")
+    code = update.message.text.strip()
+
+    if domain == VALID_DOMAIN and code == VALID_CODE:
+        context.user_data["support_authenticated"] = True
+        keyboard = [
+            [InlineKeyboardButton("🛠 ติดต่อซัพพอร์ต", url="https://t.me/closed7777")],
+            [InlineKeyboardButton("👤 ติดต่อเอเจนซี่", url="https://t.me/closed7777")],
+            [InlineKeyboardButton("🚪 ออกจากระบบ", callback_data="support_logout")],
+        ]
+        await update.message.reply_text(
+            "✅ <b>ยืนยันสำเร็จ!</b>\n\n🌐 Domain: <code>sksj.com</code>\n🟢 สถานะระบบ: <b>เปิดใช้งาน</b>\n\nยินดีต้อนรับเข้าสู่หน้าซัพพอร์ตครับ",
+            parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard),
+        )
+    else:
+        context.user_data.clear()
+        await update.message.reply_text(
+            "❌ <b>ข้อมูลไม่ถูกต้อง</b>\n\nDomain หรือรหัสไม่ตรงกับข้อมูลที่ได้รับจากเอเจนซี่\nกรุณากด /start แล้วลองใหม่อีกครั้งครับ",
+            parse_mode="HTML",
+        )
+    return ConversationHandler.END
+
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+    await update.message.reply_text("❌ ยกเลิกการเข้าสู่ระบบแล้วครับ")
+    return ConversationHandler.END
+
+
+async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    context.user_data.clear()
+    await query.message.reply_text("🚪 ออกจากระบบซัพพอร์ตเรียบร้อยแล้วครับ")
 
 
 app = Application.builder().token(TOKEN).build()
+login_handler = ConversationHandler(
+    entry_points=[CallbackQueryHandler(support_login, pattern="^support_login$")],
+    states={
+        DOMAIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_domain)],
+        CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_code)],
+    },
+    fallbacks=[CommandHandler("cancel", cancel)],
+)
+
 app.add_handler(CommandHandler("start", start))
+app.add_handler(login_handler)
+app.add_handler(CallbackQueryHandler(logout, pattern="^support_logout$"))
 
 print("🤖 Askmebet Sale Bot is running...")
 app.run_polling()
