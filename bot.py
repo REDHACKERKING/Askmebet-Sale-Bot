@@ -96,7 +96,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 👉 Tap a button below to start a chat.
 
 🛡️ <b>ช่องทางทางการ / Official:</b>
-@Askmebetsaleofficial"""
+@AMBServiceOfficial"""
 
     keyboard = [
         [
