@@ -34,7 +34,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await asyncio.sleep(6)
     await success.delete()
-
+await message.reply_photo(
+        photo="https://s.imgz.io/2026/09/17/1000354828d4067fc0751190c4.jpg",
+        caption="สวัสดีครับ ยินดีต้อนรับสู่ <b>Askmebet Sale Official</b> ครับ 👋\n\nต้องการประสานงานด้านใดครับ",
+        parse_mode="HTML",
+)
     sale_text = """👤 <b>Sale On-call ประจำสัปดาห์นี้</b>
 ──────────────
 📅 วันเสาร์ ที่ 12/09/2026
@@ -69,11 +73,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     await message.reply_text(sale_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard), disable_web_page_preview=True)
 
-    await message.reply_photo(
-        photo="https://s.imgz.io/2026/09/17/1000354828d4067fc0751190c4.jpg",
-        caption="สวัสดีครับ ยินดีต้อนรับสู่ <b>Askmebet Sale Official</b> ครับ 👋\n\nต้องการประสานงานด้านใดครับ",
-        parse_mode="HTML",
-    )
+    
 
 
 async def support_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
