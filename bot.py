@@ -17,7 +17,7 @@ from telegram.ext import (
 # CONFIG
 # =========================
 
-TOKEN = os.getenv("8996570308:AAGBdRp5lQTGRiObc1t6zaBaT3ZBcT8KhBk")
+TOKEN = os.getenv("BOT_TOKEN")
 
 if not TOKEN:
     raise RuntimeError("BOT_TOKEN is not set")
